@@ -1,13 +1,28 @@
-import React, { useState,useEffect, useRef } from "react";
-import { useGLTF, useFBX } from "@react-three/drei";
-import { useFrame } from '@react-three/fiber';
-
+import React, { useState, useEffect, useRef } from "react";
+import { useGLTF, useFBX, useAnimations } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 
 export function Avatar1(props) {
-  const {isSpeaking} = props;
+  const { isSpeaking } = props;
   const { nodes, materials } = useGLTF("/models/avatarModel1.glb");
   const [mouth, setMouth] = useState(null);
-  const {animations} = useFBX("/animations/Idle.fbx")
+
+  // for animations start
+  const { animations: idleAnimation } = useFBX("/animations/Idle1.fbx");
+
+  idleAnimation[0].name = "Idle";
+  const [animation, setAnimation] = useState("Idle");
+
+  const group = useRef();
+ const {actions} = useAnimations([idleAnimation[0]], group);
+
+ useEffect(() => {
+  actions[animation].reset().fadeIn(0.5).play();
+  return () => actions[animation].fadeOut(0.5);
+
+ },[animation])
+
+  // for animation end
 
   useEffect(() => {
     if (nodes.Wolf3D_Head) {
@@ -17,16 +32,14 @@ export function Avatar1(props) {
 
   useFrame(() => {
     if (mouth) {
-      mouth.morphTargetInfluences[0] = isSpeaking ? Math.sin(Date.now() * 0.01) : 0;
+      mouth.morphTargetInfluences[0] = isSpeaking
+        ? Math.sin(Date.now() * 0.01)
+        : 0;
     }
   });
 
-
-
-
-
   return (
-    <group {...props} dispose={null}>
+    <group {...props} dispose={null} ref={group}>
       <primitive object={nodes.Hips} />
       <skinnedMesh
         geometry={nodes.Wolf3D_Hair.geometry}
