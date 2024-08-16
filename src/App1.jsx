@@ -1,43 +1,53 @@
 import { Canvas } from "@react-three/fiber";
 import { Experience } from "./components/Experience";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { PollyClient, SynthesizeSpeechCommand } from "@aws-sdk/client-polly";
+import SlotNode from "three/examples/jsm/renderers/webgl/nodes/SlotNode.js";
 
-function App() {
+function App1() {
   const [text, setText] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [voices, setVoices] = useState([]);
-  const [selectedVoice, setSelectedVoice] = useState(null);
 
-  useEffect(() => {
-    const populateVoices = () => {
-      const availableVoices = speechSynthesis.getVoices();
-      availableVoices.forEach((voice) => {
-        console.log(`${voice.name} (${voice.lang})`);
-      });
-      setVoices(availableVoices);
+  const pollyClient = new PollyClient({
+    region: "us-east-1",
+    credentials: {
+      accessKeyId: "AKIAWX2IF4Y5DYS5PB7H",
+      secretAccessKey: "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",
+    },
+  });
 
-      const hardcodedVoiceName = "Google UK English Male";
-      const voice = availableVoices.find(
-        (voice) => voice.name === hardcodedVoiceName
-      );
-      setSelectedVoice(voice || availableVoices[0]); // Fallback to the first voice if hardcoded voice is not found
-    };
+  const speakText = async (text) => {
+    setIsSpeaking(true);
+    const command = new SynthesizeSpeechCommand({
+      Text: text,
+      OutputFormat: "mp3",
+      VoiceId: "Matthew",
+    });
 
-    populateVoices();
-    speechSynthesis.onvoiceschanged = populateVoices;
-  }, []);
+    console.log(text);
 
-  const speakText = (text) => {
-    if (!text) return;
+    try {
+      const data = await pollyClient.send(command);
+      console.log(data);
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
+      const audioChunks = [];
+      for await (const chunk of data.AudioStream) {
+        audioChunks.push(chunk);
+      }
+      const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+      const url = URL.createObjectURL(audioBlob);
+
+      // Play the audio
+      const audio = new Audio(url);
+      audio.play();
+
+      audio.onended = () => {
+        setIsSpeaking(false);
+      };
+    } catch (error) {
+      console.error("Error synthesizing speech:", error);
+      setIsSpeaking(false);
     }
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-
-    speechSynthesis.speak(utterance);
   };
 
   const handleSubmit = (e) => {
@@ -60,10 +70,12 @@ function App() {
         style={{
           display: "flex",
           flexDirection: "column",
-          width:"50%",
+          width: "50%",
         }}
       >
-        <h1  style={{textAlign:"center"}}>Using with web-speech API</h1>
+        <h1 style={{ textAlign: "center" }}>
+          Using with Amazon Polly text-speech API
+        </h1>
         <Canvas
           shadows
           camera={{ position: [0, 0, 8], fov: 25 }}
@@ -119,4 +131,4 @@ function App() {
   );
 }
 
-export default App;
+export default App1;
