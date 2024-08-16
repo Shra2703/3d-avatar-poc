@@ -2,7 +2,6 @@ import { Canvas } from "@react-three/fiber";
 import { Experience } from "./components/Experience";
 import React, { useState } from "react";
 import { PollyClient, SynthesizeSpeechCommand } from "@aws-sdk/client-polly";
-import SlotNode from "three/examples/jsm/renderers/webgl/nodes/SlotNode.js";
 
 function App1() {
   const [text, setText] = useState("");
@@ -17,8 +16,8 @@ function App1() {
   });
 
   const speakText = async (text) => {
-    if(!text) return;
-    setIsSpeaking(true);
+    if (!text) return;
+    // setIsSpeaking(true);
     const command = new SynthesizeSpeechCommand({
       Text: text,
       OutputFormat: "mp3",
@@ -28,6 +27,13 @@ function App1() {
     console.log(text);
 
     try {
+      setIsSpeaking(false);
+
+      const command = new SynthesizeSpeechCommand({
+        Text: text,
+        OutputFormat: "mp3",
+        VoiceId: "Matthew",
+      });
       const data = await pollyClient.send(command);
       console.log(data);
 
@@ -40,11 +46,14 @@ function App1() {
 
       // Play the audio
       const audio = new Audio(url);
-      audio.play();
-
+      audio.onplay = () => {
+        setIsSpeaking(true); // Start lip sync when audio starts playing
+      };
       audio.onended = () => {
         setIsSpeaking(false);
       };
+
+      audio.play();
     } catch (error) {
       console.error("Error synthesizing speech:", error);
       setIsSpeaking(false);
