@@ -14,13 +14,12 @@ export function Avatar1(props) {
   const [animation, setAnimation] = useState("Idle");
 
   const group = useRef();
- const {actions} = useAnimations([idleAnimation[0]], group);
+  const { actions } = useAnimations([idleAnimation[0]], group);
 
- useEffect(() => {
-  actions[animation].reset().fadeIn(0.5).play();
-  return () => actions[animation].fadeOut(0.5);
-
- },[animation])
+  useEffect(() => {
+    actions[animation].reset().fadeIn(0.5).play();
+    return () => actions[animation].fadeOut(0.5);
+  }, [animation]);
 
   // for animation end
 
