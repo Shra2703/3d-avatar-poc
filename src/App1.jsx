@@ -17,6 +17,7 @@ function App1() {
   });
 
   const speakText = async (text) => {
+    if(!text) return;
     setIsSpeaking(true);
     const command = new SynthesizeSpeechCommand({
       Text: text,
